@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 export default function Home() {
   const [iframeUrl, setIframeUrl] = useState("");
 
-  useEffect(() => {
+  const fetchAydSession = () => {
     fetch("/api/ayd", {
       method: "POST",
       headers: {
@@ -16,6 +16,34 @@ export default function Home() {
       .then(({ url }) => {
         setIframeUrl(url);
       });
+  };
+
+  useEffect(() => {
+    // 设置初始 iframe URL
+    if (typeof window !== "undefined") {
+      setIframeUrl(`https://www.askyourdatabase.com/chatbot/${process.env.AYD_CHATBOT_ID}`);
+    }
+
+    // 监听来自 iframe 的消息
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data.type === 'LOGIN_SUCCESS') {
+        // 登录成功，设置 iframe URL 为成功消息中的 URL
+        setIframeUrl(event.data.url);
+      } else if (event.data.type === 'LOGIN_REQUIRED') {
+        // 需要登录，重新发起 ayd session 请求
+        fetchAydSession();
+      }
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener('message', handleMessage);
+    }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener('message', handleMessage);
+      }
+    };
   }, []);
 
   return (
