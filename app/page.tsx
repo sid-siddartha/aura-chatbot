@@ -19,18 +19,18 @@ export default function Home() {
   };
 
   useEffect(() => {
-    // 设置初始 iframe URL
+    // Set initial iframe URL - this provides a default chatbot URL using the environment variable
     if (typeof window !== "undefined") {
       setIframeUrl(`https://www.askyourdatabase.com/chatbot/${process.env.AYD_CHATBOT_ID}`);
     }
 
-    // 监听来自 iframe 的消息
+    // Listen for messages from the iframe - this handles communication between the parent window and the embedded chatbot
     const handleMessage = (event: MessageEvent) => {
       if (event.data.type === 'LOGIN_SUCCESS') {
-        // 登录成功，设置 iframe URL 为成功消息中的 URL
+        // Login successful - update iframe URL with the authenticated session URL provided in the message
         setIframeUrl(event.data.url);
       } else if (event.data.type === 'LOGIN_REQUIRED') {
-        // 需要登录，重新发起 ayd session 请求
+        // Login required - fetch a new authenticated session from our API endpoint
         fetchAydSession();
       }
     };
@@ -53,7 +53,7 @@ export default function Home() {
         style={{
           height: "100vh",
           width: "100vw",
-          border: "none", // 可选，去掉边框
+          border: "none", // Optional - removes the default iframe border for a cleaner appearance
         }}
         src={iframeUrl}
       ></iframe>
