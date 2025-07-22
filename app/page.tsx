@@ -59,6 +59,7 @@ export default function Home() {
     <main>
       <iframe
         className="mx-auto"
+        allow="clipboard-read; clipboard-write"
         style={{
           height: "100vh",
           width: "100vw",
