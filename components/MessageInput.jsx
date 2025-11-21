@@ -1,11 +1,6 @@
-import { useState, KeyboardEvent } from 'react';
+import { useState } from 'react';
 
-interface MessageInputProps {
-  onSendMessage: (message: string) => void;
-  disabled?: boolean;
-}
-
-export function MessageInput({ onSendMessage, disabled = false }: MessageInputProps) {
+export function MessageInput({ onSendMessage, disabled = false }) {
   const [message, setMessage] = useState('');
 
   const handleSubmit = () => {
@@ -15,7 +10,7 @@ export function MessageInput({ onSendMessage, disabled = false }: MessageInputPr
     }
   };
 
-  const handleKeyPress = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
@@ -38,7 +33,7 @@ export function MessageInput({ onSendMessage, disabled = false }: MessageInputPr
             maxHeight: '150px',
           }}
           onInput={(e) => {
-            const target = e.target as HTMLTextAreaElement;
+            const target = e.target;
             target.style.height = 'auto';
             target.style.height = Math.min(target.scrollHeight, 150) + 'px';
           }}

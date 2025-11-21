@@ -1,30 +1,18 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ChatMessage } from '@/components/ChatMessage';
 import { MessageInput } from '@/components/MessageInput';
 import { createNewChat, sendMessage, getChatMessages } from '@/lib/chat-api';
 
-interface Message {
-  id: string;
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  timestamp: string;
-  isSQL?: boolean;
-  sql?: string;
-  result?: any;
-  isImage?: boolean;
-  url?: string;
-}
-
 export default function ChatDemo() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
+  const [messages, setMessages] = useState([]);
+  const [currentChatId, setCurrentChatId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
-  const [executingFunctions, setExecutingFunctions] = useState<Set<string>>(new Set());
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [executingFunctions, setExecutingFunctions] = useState(new Set());
+  const messagesEndRef = useRef(null);
   const streamingContentRef = useRef('');
 
   const scrollToBottom = () => {
@@ -55,11 +43,11 @@ export default function ChatDemo() {
     initializeChat();
   }, []);
 
-  const handleSendMessage = async (content: string) => {
+  const handleSendMessage = async (content) => {
     if (!currentChatId || isStreaming) return;
 
     // Add user message to UI
-    const userMessage: Message = {
+    const userMessage = {
       id: Date.now().toString(),
       role: 'user',
       content,
@@ -74,15 +62,15 @@ export default function ChatDemo() {
 
     try {
       await sendMessage(content, currentChatId, {
-        onText: (text: string) => {
+        onText: (text) => {
           setStreamingContent(prev => {
             const newContent = prev + text;
             streamingContentRef.current = newContent;
             return newContent;
           });
         },
-        onSQL: (data: any) => {
-          const sqlMessage: Message = {
+        onSQL: (data) => {
+          const sqlMessage = {
             id: data.id || Date.now().toString(),
             role: 'system',
             content: '',
@@ -93,8 +81,8 @@ export default function ChatDemo() {
           };
           setMessages(prev => [...prev, sqlMessage]);
         },
-        onImage: (data: any) => {
-          const imageMessage: Message = {
+        onImage: (data) => {
+          const imageMessage = {
             id: Date.now().toString(),
             role: 'assistant',
             content: '',
@@ -104,7 +92,7 @@ export default function ChatDemo() {
           };
           setMessages(prev => [...prev, imageMessage]);
         },
-        onExecutionStatus: (data: any) => {
+        onExecutionStatus: (data) => {
           if (data.status === 'started') {
             setExecutingFunctions(prev => new Set([...prev, data.functionName]));
           } else if (data.status === 'completed') {
@@ -119,7 +107,7 @@ export default function ChatDemo() {
           // 使用 ref 中的当前值，确保获取到最新的流式内容
           const currentContent = streamingContentRef.current;
           if (currentContent.trim()) {
-            const assistantMessage: Message = {
+            const assistantMessage = {
               id: Date.now().toString(),
               role: 'assistant',
               content: currentContent,
@@ -132,7 +120,7 @@ export default function ChatDemo() {
           setIsStreaming(false);
           setExecutingFunctions(new Set());
         },
-        onError: (error: string) => {
+        onError: (error) => {
           console.error('Streaming error:', error);
           setStreamingContent('');
           streamingContentRef.current = '';

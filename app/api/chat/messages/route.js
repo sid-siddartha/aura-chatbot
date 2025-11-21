@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { ASKYOURDATABASE_CONFIG } from '@/lib/ayd-config';
 
-export async function GET(req: NextRequest) {
+export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
     const chatid = searchParams.get('chatid');

@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { ASKYOURDATABASE_CONFIG } from "@/lib/ayd-config";
 
 export const revalidate = 0;
 
 export const dynamic = "force-dynamic";
 
-export async function POST(req: NextRequest) {
+export async function POST(req) {
 
   const body = await fetch(`${ASKYOURDATABASE_CONFIG.HOST}/api/widget/v2/session`, {
     method: "POST",

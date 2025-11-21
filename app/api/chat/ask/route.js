@@ -1,7 +1,6 @@
-import { NextRequest } from 'next/server';
 import { ASKYOURDATABASE_CONFIG } from '@/lib/ayd-config';
 
-export async function POST(req: NextRequest) {
+export async function POST(req) {
   try {
     const body = await req.json();
     const { question, chatid, debug = true } = body;
@@ -41,7 +40,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 直接转发流式响应
+    // forward streaming response
     return new Response(response.body, {
       headers: {
         'Content-Type': 'text/event-stream',
