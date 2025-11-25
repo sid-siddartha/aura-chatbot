@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useCallback } from 'react';
 import { ChatMessage } from '@/components/ChatMessage';
 import { MessageInput } from '@/components/MessageInput';
 import { createNewChat, sendMessage, getChatMessages } from '@/lib/chat-api';
@@ -14,6 +15,8 @@ export default function ChatDemo() {
   const [executingFunctions, setExecutingFunctions] = useState(new Set());
   const messagesEndRef = useRef(null);
   const streamingContentRef = useRef('');
+  const [aydUrl, setAydUrl] = useState('');
+  const [showAyd, setShowAyd] = useState(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -27,11 +30,20 @@ export default function ChatDemo() {
     try {
       setIsLoading(true);
       const chatId = await createNewChat();
+      console.log('Chat created with ID:', chatId);
       setCurrentChatId(chatId);
       
       // Load existing messages
-      const existingMessages = await getChatMessages(chatId);
-      setMessages(existingMessages.reverse()); // Reverse to show chronological order
+      try {
+        const existingMessages = await getChatMessages(chatId);
+        console.log('Existing messages:', existingMessages);
+        // Ensure messages is an array and reverse for chronological order
+        const messagesArray = Array.isArray(existingMessages) ? existingMessages : (existingMessages?.messages || []);
+        setMessages(messagesArray.reverse());
+      } catch (error) {
+        console.warn('Could not load existing messages:', error);
+        setMessages([]);
+      }
     } catch (error) {
       console.error('Failed to initialize chat:', error);
     } finally {
@@ -43,8 +55,30 @@ export default function ChatDemo() {
     initializeChat();
   }, []);
 
+  const openAydChat = useCallback(async () => {
+    try {
+      const res = await fetch('/api/chat/new', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        setAydUrl(data.url);
+        setShowAyd(true);
+      } else {
+        console.error('Failed to get AYD session URL', data);
+        alert('Failed to open AYD chat session. See console.');
+      }
+    } catch (e) {
+      console.error('Error opening AYD chat:', e);
+      alert('Error opening AYD chat. See console.');
+    }
+  }, []);
+
   const handleSendMessage = async (content) => {
-    if (!currentChatId || isStreaming) return;
+    if (!currentChatId || isStreaming) {
+      console.log('Skipping send - currentChatId:', currentChatId, 'isStreaming:', isStreaming);
+      return;
+    }
+
+    console.log('Sending message:', content, 'to chat:', currentChatId);
 
     // Add user message to UI
     const userMessage = {
@@ -63,6 +97,7 @@ export default function ChatDemo() {
     try {
       await sendMessage(content, currentChatId, {
         onText: (text) => {
+          console.log('Received text:', text);
           setStreamingContent(prev => {
             const newContent = prev + text;
             streamingContentRef.current = newContent;
@@ -70,6 +105,7 @@ export default function ChatDemo() {
           });
         },
         onSQL: (data) => {
+          console.log('Received SQL:', data);
           const sqlMessage = {
             id: data.id || Date.now().toString(),
             role: 'system',
@@ -82,6 +118,7 @@ export default function ChatDemo() {
           setMessages(prev => [...prev, sqlMessage]);
         },
         onImage: (data) => {
+          console.log('Received image:', data);
           const imageMessage = {
             id: Date.now().toString(),
             role: 'assistant',
@@ -93,6 +130,7 @@ export default function ChatDemo() {
           setMessages(prev => [...prev, imageMessage]);
         },
         onExecutionStatus: (data) => {
+          console.log('Execution status:', data);
           if (data.status === 'started') {
             setExecutingFunctions(prev => new Set([...prev, data.functionName]));
           } else if (data.status === 'completed') {
@@ -104,6 +142,7 @@ export default function ChatDemo() {
           }
         },
         onEnd: () => {
+          console.log('Stream ended');
           // 使用 ref 中的当前值，确保获取到最新的流式内容
           const currentContent = streamingContentRef.current;
           if (currentContent.trim()) {
@@ -161,12 +200,20 @@ export default function ChatDemo() {
         <h1 className="text-xl font-semibold text-gray-800">
           AskYourDatabase API Demo
         </h1>
-        <button
-          onClick={handleNewChat}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          New Chat
-        </button>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={handleNewChat}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            New Chat
+          </button>
+          <button
+            onClick={openAydChat}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          >
+            Open AYD Chat
+          </button>
+        </div>
       </div>
 
       {/* Messages */}
@@ -208,6 +255,26 @@ export default function ChatDemo() {
           disabled={isStreaming}
         />
       </div>
+
+      {/* AYD iframe modal */}
+      {showAyd && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+          <div className="relative w-[90%] h-[80%] bg-white rounded shadow-lg overflow-hidden">
+            <div className="flex justify-between items-center p-2 bg-gray-100 border-b">
+              <div className="text-sm font-medium">AskYourDatabase Chat</div>
+              <div>
+                <button
+                  onClick={() => setShowAyd(false)}
+                  className="px-3 py-1 bg-red-600 text-white rounded"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+            <iframe src={aydUrl} className="w-full h-full border-0" />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

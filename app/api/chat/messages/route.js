@@ -8,7 +8,7 @@ export async function GET(req) {
     const debug = searchParams.get('debug') || 'true';
     const timestamp = searchParams.get('timestamp');
 
-    if (!chatid) {
+    if (!chatid || chatid === 'undefined') {
       return NextResponse.json(
         { error: 'chatid is required' },
         { status: 400 }

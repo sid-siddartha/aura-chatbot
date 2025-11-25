@@ -5,6 +5,8 @@ export async function POST(req) {
     const body = await req.json();
     const { question, chatid, debug = true } = body;
 
+    console.log('Asking question:', { question, chatid, debug });
+
     if (!question || !chatid) {
       return new Response(
         JSON.stringify({ error: 'question and chatid are required' }),
@@ -29,8 +31,11 @@ export async function POST(req) {
       }),
     });
 
+    console.log('Backend response status:', response.status);
+
     if (!response.ok) {
       const error = await response.text();
+      console.error('Backend error:', error);
       return new Response(
         JSON.stringify({ error: `Failed to send message: ${error}` }),
         { 
