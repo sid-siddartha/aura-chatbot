@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import LoadingPage from "@/components/LoadingPage";
 
 export default function Home() {
   const [iframeUrl, setIframeUrl] = useState(null);  // <— use null instead of empty string
@@ -66,19 +67,7 @@ export default function Home() {
           src={iframeUrl}
         ></iframe>
       ) : (
-        // Optional loading screen
-        <div
-          style={{
-            height: "100vh",
-            width: "100vw",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            fontSize: "24px",
-          }}
-        >
-          Loading chatbot...
-        </div>
+        <LoadingPage />
       )}
     </main>
   );
